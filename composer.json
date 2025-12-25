@@ -1,0 +1,40 @@
+{
+    "name": "eyecuejohn/tra-vfd-laravel",
+    "description": "Professional Laravel package for Tanzania Revenue Authority (TRA) VFD API integration integration with thermal PDF receipt support.",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "John M Kagaruki",
+            "email": "john@eyecuemedia.co.tz"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "ext-dom": "*",
+        "ext-simplexml": "*",
+        "ext-openssl": "*",
+        "illuminate/support": "^9.0|^10.0|^11.0|^12.0",
+        "illuminate/database": "^9.0|^10.0|^11.0|^12.0",
+        "illuminate/http": "^9.0|^10.0|^11.0|^12.0",
+        "illuminate/cache": "^9.0|^10.0|^11.0|^12.0",
+        "illuminate/log": "^9.0|^10.0|^11.0|^12.0",
+        "simplesoftwareio/simple-qrcode": "^4.2",
+        "robrichards/xmlseclibs": "^3.1",
+        "barryvdh/laravel-dompdf": "^2.0|^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Eyecuejohn\\TraVfd\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Eyecuejohn\\TraVfd\\TraVfdServiceProvider"
+            ],
+            "aliases": {
+                "TraVfd": "Eyecuejohn\\TraVfd\\Facades\\TraVfd"
+            }
+        }
+    }
+}
