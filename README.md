@@ -166,90 +166,188 @@ Thermal Receipt Blade Template (receipts/thermal.blade.php)
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Fiscal Receipt</title>
     <style>
-        @page { margin: 0; }
-        body {
-            font-family: 'Courier', monospace; /* Best for thermal alignment */
-            font-size: 12px;
-            width: 80mm;
-            padding: 5mm;
-            margin: 0;
-            line-height: 1.4;
+        /* Thermal roll rendering with flexible height */
+        @page { 
+            margin: 5; 
+            size: 80mm auto; 
         }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            width: 70mm;
+            margin: 0;
+            /* 10px horizontal padding to force text away from edges and stop bleed */
+            padding: 15px 15px; 
+            font-size: 7pt;    
+            line-height: 1.8;
+            color: #000;
+            height: auto;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
         .text-center { text-align: center; }
-        .text-right { text-align: right; }
         .bold { font-weight: bold; }
-        .divider { border-bottom: 1px dashed #000; margin: 5px 0; }
         
-        table { width: 100%; border-collapse: collapse; }
-        .items-table th { text-align: left; border-bottom: 1px solid #000; }
+        /* Solid straight line divider */
+        .divider { 
+            border-top: 1px solid #000; 
+            margin: 10px 0; 
+            width: 100%;
+        }
+
+        /* Standard flow for label and data sitting next to each other */
+        .info-row {
+            text-align: left;
+            margin-bottom: 1px;
+            word-wrap: break-word;
+        }
+
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            table-layout: fixed; 
+            margin: 0; 
+        }
+
+        td { 
+            vertical-align: top; 
+            word-wrap: break-word; 
+            padding: 1.5px 0;
+        }
+
+        .left-align { text-align: left; }
+        .right-align { text-align: right; }
         
-        .qr-code { margin: 10px auto; width: 40mm; }
-        .qr-code img { width: 100%; height: auto; }
+        .logo-container { text-align: center; margin: 5px 0; }
+        .logo { width: 35mm; height: auto; display: inline-block; }
         
-        .fiscal-data { font-size: 10px; margin-top: 10px; }
+        .qr-code { margin: 10px auto 5px auto; width: 35mm; text-align: center; }
+        .qr-code img { width: 35mm; height: 35mm; display: inline-block; }
     </style>
 </head>
 <body>
     <div class="text-center">
-        <h2 style="margin-bottom: 5px;">{{ config('app.name') }}</h2>
-        <p>TIN: {{ config('tra.tin') }}<br>
-        Serial: {{ config('tra.cert_serial') }}</p>
+        <div class="bold">*** START OF LEGAL RECEIPT ***</div>
+        
+        <div class="logo-container">
+            @if($logo)
+                <img src="data:image/png;base64,{{ $logo }}" class="logo">
+            @endif
+        </div>
+
+        <div>TRA</div>
+        <div class="bold">{{ $config['company_name'] }}</div>
+        <div>{{ $config['company_address'] ?? '' }}</div>
+        <div><span class="bold">Mobile:</span> {{ $config['company_mobile'] ?? '' }}</div>
+        <div><span class="bold">TIN:</span> {{ $config['tin'] }}</div>
+        <div><span class="bold">VRN:</span> {{ $config['vrn'] ?? 'NOT REGISTERED' }}</div>
+        <div><span class="bold">SERIAL NO:</span> {{ $order['serial_no'] }}</div>
+        <div><span class="bold">UIN:</span> {{ $order['uin'] }}</div>
+        <div><span class="bold">TAX OFFICE:</span> {{ $config['tax_office'] ?? '' }}</div>
     </div>
 
     <div class="divider"></div>
 
-    <table>
-        <tr><td>Date:</td><td class="text-right">{{ date('d-m-Y H:i') }}</td></tr>
-        <tr><td>Receipt #:</td><td class="text-right">{{ $order->tra_receipt_num }}</td></tr>
-    </table>
+    <div class="info-row">CUSTOMER NAME: {{ $order['customer_name'] }}</div>
+    <div class="info-row">CUSTOMER ID TYPE: {{ $order['customer_id_type'] ?? 'Taxpayer Identification Number' }}</div>
+    <div class="info-row">CUSTOMER ID: {{ $order['customer_id'] }}</div>
+    <div class="info-row">CUSTOMER VRN: {{ $order['customer_vrn'] ?? '' }}</div>
+    <div class="info-row">CUSTOMER MOBILE: {{ $order['customer_mobile'] ?? '' }}</div>
+    <div class="info-row">CUSTOMER ADDRESS: {{ $order['customer_address'] ?? '' }}</div>
 
     <div class="divider"></div>
 
-    <table class="items-table">
-        <thead>
-            <tr>
-                <th>Item</th>
-                <th class="text-right">Qty</th>
-                <th class="text-right">Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($order->items as $item)
-            <tr>
-                <td>{{ $item->desc }}</td>
-                <td class="text-right">{{ $item->qty }}</td>
-                <td class="text-right">{{ number_format($item->amount, 2) }}</td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
+    <div class="info-row">RECEIPT NUMBER: {{ $order['rct_num'] }}</div>
+    <div class="info-row">Z NUMBER: {{ $order['z_num'] }}</div>
+    <div class="info-row">RECEIPT DATE: {{ $order['date'] }}</div>
+    <div class="info-row">RECEIPT TIME: {{ $order['time'] }}</div>
 
     <div class="divider"></div>
 
     <table>
-        <tr class="bold">
-            <td>TOTAL</td>
-            <td class="text-right">TZS {{ number_format($order->amount, 2) }}</td>
+        @foreach($items as $item)
+            <tr><td colspan="2" class="text-center">{{ $item['desc'] }}</td></tr>
+            <tr>
+                <td class="left-align" style="width: 55%;">&nbsp;&nbsp;{{ $item['qty'] }} x {{ number_format($item['unit_price'], 2) }}</td>
+                <td class="right-align" style="width: 45%;">{{ number_format($item['amount'], 2) }} {{ $item['tax_code'] }}</td>
+            </tr>
+        @endforeach
+    </table>
+
+    <div class="divider"></div>
+
+    <table>
+        <tr>
+            <td class="left-align bold" style="width: 60%;">TOTAL EXCL OF TAX:</td>
+            <td class="right-align bold" style="width: 40%;">{{ number_format($order['total_excl'], 2) }}</td>
+        </tr>
+        <tr>
+            <td class="left-align bold">TOTAL TAX:</td>
+            <td class="right-align bold">{{ number_format($order['total_tax'], 2) }}</td>
+        </tr>
+        <tr>
+            <td class="left-align bold">TOTAL INCL OF TAX:</td>
+            <td class="right-align bold">{{ number_format($order['total_amount'], 2) }}</td>
         </tr>
     </table>
 
-    <div class="text-center">
-        <div class="qr-code">
-            <img src="data:image/png;base64, {!! base64_encode(TraVfd::generateQrCode($order->tra_verify_url)) !!} ">
-        </div>
-        <p class="fiscal-data">
-            FISCAL RECEIPT<br>
-            Verify at: {{ config('tra.verify_url') }}
-        </p>
-    </div>
+    <div class="divider"></div>
 
-    <div class="text-center bold">
-        *** THANK YOU ***
+    <div class="text-center">
+        <div class="bold">RECEIPT VERIFICATION CODE</div>
+        <div class="bold" style="font-size: 10pt; letter-spacing: 1px;">{{ $order['verification_code'] }}</div>
+        
+        <div class="qr-code">
+             <img src="data:image/png;base64, {!! base64_encode(QrCode::format('png')->size(150)->margin(0)->generate($order['verify_url'])) !!} ">
+        </div>
+        
+        <div style="margin: 5px 0;">***</div>
+        <div class="bold">END OF LEGAL RECEIPT ***</div>
     </div>
 </body>
 </html>
+```
+
+Some .env values
+
+```
+
+# --- TRA VFD SETTINGS ---
+TRA_COMPANY_NAME="Your Company Name Ltd"
+TRA_COMPANY_ADDRESS="P.O. BOX 000, Dar es Salaam, Tanzania"
+TRA_COMPANY_MOBILE="255700000000"
+TRA_TAX_OFFICE="Kinondoni"
+
+# Use your dummy TIN for testing
+TRA_VRN="NOT REGISTERED"
+
+
+# API URLs (Using TRA's actual URLs even for tests)
+# TRA_API_URL=https://vfd.tra.go.tz
+# TRA_VERIFY_URL=https://verify.tra.go.tz
+# TRA_ROUTING_KEY=dummy_registration_key_123
+
+# Tax Settings
+TRA_VAT_REGISTERED=false
+
+# Taxpayer Info
+TRA_TIN=999999999
+TRA_CERT_SERIAL=VFD-TEST-001
+TRA_CERT_PASSWORD=password123
+TRA_CERT_PATH=tra/cert.pfx
+
+# Test Server Endpoints (from TRA Docs)
+TRA_API_URL=https://virtual.tra.go.tz/efdmsRctApi
+TRA_VERIFY_URL=https://virtual.tra.go.tz/efdmsRctVerify/Home/Index
+TRA_ROUTING_KEY=dummy_key_123
+
+# Use these if you want to be specific in your config/tra-vfd.php
+TRA_REGISTRATION_ENDPOINT=https://virtual.tra.go.tz/efdmsRctApi/api/vfdRegReq
+TRA_TOKEN_ENDPOINT=https://virtual.tra.go.tz/efdmsRctApi/vfdtoken
+TRA_RECEIPT_ENDPOINT=https://virtual.tra.go.tz/efdmsRctApi/api/efdmsRctInfo
+TRA_ZREPORT_ENDPOINT=https://virtual.tra.go.tz/efdmsRctApi/api/efdmszreport
 ```
 
 🤝 Contributing
