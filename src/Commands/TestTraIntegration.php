@@ -55,7 +55,7 @@ class TestTraIntegration extends Command
         try {
             $this->comment('Step 1: Attempting to submit to TRA (this will handle signing & sequencing)...');
             
-            // This calls the manager method we built earlier
+            // This calls the manager method
             $response = TraVfd::submitReceiptWithFallback($items, $orderData);
 
             if ($response['status'] === 'success') {
